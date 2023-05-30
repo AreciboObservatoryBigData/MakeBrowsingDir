@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from connect_database import connect_to_mongodb_listing
 from connect_database import connect_to_mongodb_relation
 import os
+import re
 from bson.objectid import ObjectId
 import time
 import multiprocessing as mp
@@ -40,10 +41,12 @@ def main():
     start_time = time.time()
     dir_list=[]
     arguments = []
+    db_dirs=[]
     i = 1
     for result in results:
         
         line=result['filepath']
+        db_dirs.append(result['filepath'])
         elements = line.split("/")[6:]
         new_output_dir_path = "/".join(elements)
         new_output_dir_path = os.path.join(folders_path, new_output_dir_path)
@@ -51,6 +54,17 @@ def main():
         if not os.path.exists(new_output_dir_path):
             command = "mkdir -p '" + new_output_dir_path + "'"
             os.system(command)
+        
+        folder_path = line
+        output_file = os.path.join(new_output_dir_path, "info.txt")
+        info_dic = obtainNames(folder_path)
+        with open (output_file,"w") as f:
+            f.write("file_name  file_size   file_size_readable \n")
+
+            for each in info_dic:
+                size_readable = convertBytes(each['filesize'])
+                f.write(f"{each['filename']}    {each['filesize']}   {size_readable} \n")
+        breakpoint()
 
         arguments.append(result["_id"])
         if i % 10000 == 0:
@@ -71,14 +85,13 @@ def main():
 
     
     for z, result in enumerate(results):
-        tb = convert_bytes(result)
+        tb = convertBytes(result)
         txt_file = os.path.join(dir_list[z], "recursive_size.txt")
         with open(txt_file, 'w') as f:
             f.write(f"Recursive Size: {result} bytes, {tb} \n")
         total_time = time.time() - start_time
     print(total_time)
         
-
 
 def multiprocessLookup(object_ID):
     # relation = connect_to_mongodb_relation()
@@ -123,7 +136,7 @@ def multiprocessLookup(object_ID):
 
 
 
-def convert_bytes(byte_size):
+def convertBytes(byte_size):
     #Converts a byte size to MB, GB, and TB.
     sizes = ["B", "KB", "MB", "GB", "TB"]
     size_labels = ["Bytes", "KB", "MB", "GB", "TB"]
@@ -138,6 +151,53 @@ def convert_bytes(byte_size):
     tb = (f"{converted_size} {size_labels[index]}")
     return tb 
 
+def obtainNames(folder_path):
+    x=(f'^{folder_path}/.*')
+    aggregation = [
+            {
+                '$project': {
+                    'filename': 1, 
+                    'filepath': 1, 
+                    'filesize': 1, 
+                    'filetype': 1
+                }
+            }, {
+                '$match': {
+                    'filepath': {
+                        '$regex': x
+                    }, 
+                    'filetype': 'f'
+                }
+            }, {
+                '$addFields': {
+                    'splitString': {
+                        '$split': [
+                            '$filepath', '/'
+                        ]
+                    }
+                }
+            }, {
+                '$addFields': {
+                    'array_len': {
+                        '$size': '$splitString'
+                    }
+                }
+            }, {
+                '$match': {
+                    'array_len': {
+                        '$eq': 10 #change 10 for a value determined by each folder
+                    }
+                }
+            }, {
+                '$project': {
+                    'filename': 1, 
+                    'filesize': 1
+                }
+            }
+        ]
+    names = collection.aggregate(aggregation)
+    names = [item for item in names]
+    return names
 
 
 main()
