@@ -8,7 +8,7 @@ import time
 import multiprocessing as mp
 
 folders_path = "test/folders_test"
-reset_dir = False
+reset_dir = True
 
 
 def main():
@@ -56,23 +56,29 @@ def main():
             os.system(command)
         
         folder_path = line
+        lenght=len(folder_path.split("/"))
+        if folder_path[-1] != "/":
+            lenght += 1
         output_file = os.path.join(new_output_dir_path, "info.txt")
-        info_dic = obtainNames(folder_path)
-        with open (output_file,"w") as f:
-            f.write("file_name  file_size   file_size_readable \n")
+        info_dic = obtainNames(folder_path,lenght)
 
-            for each in info_dic:
-                size_readable = convertBytes(each['filesize'])
-                f.write(f"{each['filename']}    {each['filesize']}   {size_readable} \n")
-        breakpoint()
+        if info_dic != 0:
+            with open (output_file,"w") as f:
+                f.write("file_name  file_size   file_size_readable \n")
 
+                for each in info_dic:
+                    size_readable = convertBytes(each['filesize'])
+                    f.write(f"{each['filename']}    {each['filesize']}   {size_readable} \n")
+
+        
         arguments.append(result["_id"])
         if i % 10000 == 0:
             print(i)
             # break
         i += 1
     #implement multiprocess
-    pool = mp.Pool(48)
+    pool = mp.Pool(100)
+    #change number of tasks
     print("Submitting tasks")
     results = pool.map(multiprocessLookup, arguments)
     pool.close()
@@ -151,7 +157,8 @@ def convertBytes(byte_size):
     tb = (f"{converted_size} {size_labels[index]}")
     return tb 
 
-def obtainNames(folder_path):
+def obtainNames(folder_path,lenght):
+    global collection
     x=(f'^{folder_path}/.*')
     aggregation = [
             {
@@ -185,7 +192,7 @@ def obtainNames(folder_path):
             }, {
                 '$match': {
                     'array_len': {
-                        '$eq': 10 #change 10 for a value determined by each folder
+                        '$eq': lenght 
                     }
                 }
             }, {
@@ -197,7 +204,13 @@ def obtainNames(folder_path):
         ]
     names = collection.aggregate(aggregation)
     names = [item for item in names]
-    return names
+    # if "Planetary-Radar" in folder_path:
+    #     breakpoint()
+    if len(names)==0:
+        names = 0
+        return names
+    else:
+        return names
 
 
 main()
