@@ -56,11 +56,11 @@ def main():
             os.system(command)
         
         folder_path = line
-        lenght=len(folder_path.split("/"))
+        length=len(folder_path.split("/"))
         if folder_path[-1] != "/":
-            lenght += 1
+            length += 1
         output_file = os.path.join(new_output_dir_path, "info.txt")
-        info_dic = obtainNames(folder_path,lenght)
+        info_dic = obtainNames(folder_path,length)
 
         if info_dic != 0:
             with open (output_file,"w") as f:
@@ -157,7 +157,7 @@ def convertBytes(byte_size):
     tb = (f"{converted_size} {size_labels[index]}")
     return tb 
 
-def obtainNames(folder_path,lenght):
+def obtainNames(folder_path,length):
     global collection
     x=(f'^{folder_path}/.*')
     aggregation = [
@@ -192,7 +192,7 @@ def obtainNames(folder_path,lenght):
             }, {
                 '$match': {
                     'array_len': {
-                        '$eq': lenght 
+                        '$eq': length 
                     }
                 }
             }, {
