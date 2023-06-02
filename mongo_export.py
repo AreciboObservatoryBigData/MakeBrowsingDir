@@ -77,7 +77,7 @@ def main():
             total_size_readable=convertBytes(total_size)
             with open (total_file,"w") as f:
                 f.write(f"Total Size: {total_size} bytes, {total_size_readable} \n")
-
+        
 
         arguments.append(result["_id"])
         if i % 10000 == 0:
@@ -85,7 +85,7 @@ def main():
             # break
         i += 1
     #implement multiprocess
-    pool = mp.Pool(48)
+    pool = mp.Pool(60)
     #change number of tasks
     print("Submitting tasks")
     results = pool.map(multiprocessLookup, arguments)
@@ -103,9 +103,16 @@ def main():
         txt_file = os.path.join(dir_list[z], "recursive_size.txt")
         with open(txt_file, 'w') as f:
             f.write(f"Recursive Size: {result} bytes, {tb} \n")
-        total_time = time.time() - start_time
-    print(total_time)
-        
+    
+
+    group = os.path.join(folders_path, "recursive_size.txt")
+    with open (group,"w") as f:
+        tacc = groupSize()
+        tacc_tb = convertBytes(tacc[0]['groupSize'])
+        f.write(f"Recursive Size: {tacc[0]['groupSize']} bytes, {tacc_tb} \n")
+  
+    total_time = time.time() - start_time
+    print(total_time)      
 
 def multiprocessLookup(object_ID):
     # relation = connect_to_mongodb_relation()
@@ -152,8 +159,8 @@ def multiprocessLookup(object_ID):
 
 def convertBytes(byte_size):
     #Converts a byte size to MB, GB, and TB.
-    sizes = ["B", "KB", "MB", "GB", "TB"]
-    size_labels = ["Bytes", "KB", "MB", "GB", "TB"]
+    sizes = ["B", "KB", "MB", "GB", "TB","PB"]
+    size_labels = ["Bytes", "KB", "MB", "GB", "TB", "PB"]
     base = 1000
     index = 0
 
@@ -220,5 +227,27 @@ def obtainNames(folder_path,length):
     else:
         return names
 
+def groupSize():
+    aggregation=[
+    {
+        '$match': {
+            'filetype': 'f'
+        }
+    }, {
+        '$project': {
+            'filesize': 1
+        }
+    }, {
+        '$group': {
+            '_id': None, 
+            'groupSize': {
+                '$sum': '$filesize'
+            }
+        }
+    }
+]
+    size = collection.aggregate(aggregation)
+    size = [item for item in size]
+    return size
 
 main()
