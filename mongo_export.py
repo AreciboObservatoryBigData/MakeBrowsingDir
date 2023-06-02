@@ -59,25 +59,33 @@ def main():
         length=len(folder_path.split("/"))
         if folder_path[-1] != "/":
             length += 1
-        output_file = os.path.join(new_output_dir_path, "info.txt")
+        info_file = os.path.join(new_output_dir_path, "info.txt")
+        total_file = os.path.join(new_output_dir_path, "total_size.txt")
         info_dic = obtainNames(folder_path,length)
+        
 
+        total_size = 0
         if info_dic != 0:
-            with open (output_file,"w") as f:
+            with open (info_file,"w") as f:
                 f.write("file_name  file_size   file_size_readable \n")
 
                 for each in info_dic:
+                    total_size = total_size + each['filesize']
                     size_readable = convertBytes(each['filesize'])
                     f.write(f"{each['filename']}    {each['filesize']}   {size_readable} \n")
+        if total_size > 0:
+            total_size_readable=convertBytes(total_size)
+            with open (total_file,"w") as f:
+                f.write(f"Total Size: {total_size} bytes, {total_size_readable} \n")
 
-        
+
         arguments.append(result["_id"])
         if i % 10000 == 0:
             print(i)
             # break
         i += 1
     #implement multiprocess
-    pool = mp.Pool(100)
+    pool = mp.Pool(48)
     #change number of tasks
     print("Submitting tasks")
     results = pool.map(multiprocessLookup, arguments)
