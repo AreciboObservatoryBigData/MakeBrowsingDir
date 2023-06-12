@@ -85,14 +85,14 @@ def main():
             # break
         i += 1
     #implement multiprocess
-    pool = mp.Pool(60)
+    pool = mp.Pool(100)
     #change number of tasks
     print("Submitting tasks")
     results = pool.map(multiprocessLookup, arguments)
     pool.close()
     pool.join()
 
-    # for argument in arguments[100:]:
+    # for argument in arguments:
     #     print(argument)
     #     size = multiprocessLookup(argument)
 

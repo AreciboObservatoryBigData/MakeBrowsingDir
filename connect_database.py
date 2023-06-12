@@ -5,7 +5,7 @@ def connect_to_mongodb_listing():
     client = MongoClient('mongodb://localhost:27017/')
 
     # Access the database
-    db = client['Skittles_DB']
+    db = client['TACC_Make_Browsing_Dir']
 
     # Access the collection
     collection = db['dst_listing']
@@ -18,7 +18,7 @@ def connect_to_mongodb_relation():
     client = MongoClient('mongodb://localhost:27017/')
 
     # Access the database
-    db = client['Skittles_DB']
+    db = client['TACC_Make_Browsing_Dir']
 
     # Access the collection
     relation = db['dst_file_dir_relations']

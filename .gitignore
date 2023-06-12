@@ -1,5 +1,7 @@
 test
 results
+organization_definitions
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
